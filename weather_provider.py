@@ -22,32 +22,33 @@ WeatherCondition = Enum('WeatherCondition',
 class PlantWeatherProvider:
 	TIMEOUT = 3600
 
-	def __is_night(weather):
-		return not(weather.srise_time < weather.ref_time < weather.sset_time)
-
 	__weather_manager = OWM(OWM_API_KEY).weather_manager()
-	def __get_owm_weather(self):
-		return PlantWeatherProvider.__weather_manager.weather_at_coords(
-			self.__longitude, self.__latitude)
+	def __update_weather(self):
+		self.weather = PlantWeatherProvider.__weather_manager.weather_at_coords(
+			self.__longitude, self.__latitude).weather
+
+	def __is_night(self):
+		return not(self.weather.srise_time < self.weather.ref_time < self.weather.sset_time)
 
 	def __weather_condition(self):
-		weather = self.__get_owm_weather().weather
-		if PlantWeatherProvider.__is_night(weather):
+		if self.__is_night():
 			return WeatherCondition.NIGHT
-		elif 200 <= weather.weather_code < 300:
+		elif 200 <= self.weather.weather_code < 300:
 			return WeatherCondition.THUNDERSTRM
-		elif 300 <= weather.weather_code < 700:
+		elif 300 <= self.weather.weather_code < 700:
 			return WeatherCondition.RAIN
-		elif 701 <= weather.weather_code < 800 or 801 <= weather.weather_code < 900:
+		elif 701 <= self.weather.weather_code < 800 or 801 <= self.weather.weather_code < 900:
 			return WeatherCondition.CLOUDS
-		elif 800 == weather.weather_code:
+		elif 800 == self.weather.weather_code:
 			return WeatherCondition.SUN
 		else:
 			return WeatherCondition.UNKNOWN
 
+	def __weather_temperature(self):
+		return round(self.weather.temperature('celsius')['temp'])
+
 	def __timed_out(self):
 		return (time.time() - self.__last_alive) > PlantWeatherProvider.TIMEOUT
-
 
 	def keep_alive(self):
 		print('KEEPALIVE', self.__enmon_id)
@@ -57,10 +58,12 @@ class PlantWeatherProvider:
 		if self.__timed_out():
 			return
 		try:
+			self.__update_weather()
 			condition = self.__weather_condition()
 			report = json.dumps({
 				'code': condition.value,
 				'tag': condition.name,
+				'temperature': self.__weather_temperature(),
 			})
 			client.publish(self.__topic, report, qos=1, retain=True)
 			print('REPORT', self.__enmon_id)
