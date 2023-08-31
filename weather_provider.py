@@ -16,7 +16,7 @@ REPORTING_INTERVAL = int(os.getenv('REPORTING_INTERVAL', default='900'))
 OWM_API_KEY = os.getenv('OWM_API_KEY')
 
 WeatherCondition = Enum('WeatherCondition',
-	['UNKNOWN', 'SUN', 'CLOUDS', 'RAIN', 'THUNDERSTORM', 'NIGHT'])
+	['UNKNOWN', 'SUN', 'FEW_CLOUDS', 'CLOUDS', 'RAIN', 'THUNDERSTORM', 'NIGHT'])
 
 @dataclass
 class PlantWeatherProvider:
@@ -37,8 +37,10 @@ class PlantWeatherProvider:
 			return WeatherCondition.THUNDERSTRM
 		elif 300 <= self.weather.weather_code < 700:
 			return WeatherCondition.RAIN
-		elif 701 <= self.weather.weather_code < 800 or 801 <= self.weather.weather_code < 900:
+		elif 701 <= self.weather.weather_code < 800 or 802 <= self.weather.weather_code < 900:
 			return WeatherCondition.CLOUDS
+		elif 801 == self.weather.weather_code:
+			return WeatherCondition.FEW_CLOUDS
 		elif 800 == self.weather.weather_code:
 			return WeatherCondition.SUN
 		else:
