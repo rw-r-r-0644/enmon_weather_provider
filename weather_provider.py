@@ -15,8 +15,14 @@ MQTT_SUBSCRIBER_ID = os.getenv('MQTT_SUBSCRIBER_ID', default='enmon_weather')
 REPORTING_INTERVAL = int(os.getenv('REPORTING_INTERVAL', default='900'))
 OWM_API_KEY = os.getenv('OWM_API_KEY')
 
-WeatherCondition = Enum('WeatherCondition',
-	['UNKNOWN', 'SUN', 'FEW_CLOUDS', 'CLOUDS', 'RAIN', 'THUNDERSTORM', 'NIGHT'])
+class WeatherCondition(Enum):
+    UNKNOWN = -1
+    SUN = 0
+    FEW_CLOUDS = 1
+    CLOUDS = 2
+    RAIN = 3
+    THUNDERSTORM = 4
+    NIGHT = 5
 
 @dataclass
 class PlantWeatherProvider:
